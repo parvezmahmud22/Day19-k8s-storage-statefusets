@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: pg
+  namespace: day19-storage
+spec:
+  serviceName: pg-headless
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pg
+  template:
+    metadata:
+      labels:
+        app: pg
+    spec:
+      containers:
+      - name: postgres
+        image: postgres:16-alpine
+        ports:
+        - containerPort: 5432
+        env:
+        - name: POSTGRES_DB
+          value: winterarc
+        - name: POSTGRES_USER
+          value: appuser
+        - name: POSTGRES_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: pg-secret
+              key: POSTGRES_PASSWORD
+        volumeMounts:
+        - name: data
+          mountPath: /var/lib/postgresql/data
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: standard
+      resources:
+        requests:
+          storage: 1Gi
